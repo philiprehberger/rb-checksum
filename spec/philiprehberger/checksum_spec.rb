@@ -24,6 +24,16 @@ RSpec.describe Philiprehberger::Checksum do
     end
   end
 
+  describe '.sha1' do
+    it 'computes SHA-1 for a string' do
+      expect(described_class.sha1('hello')).to eq('aaf4c61ddcc5e8a2dabede0f3b482cd9aea9434d')
+    end
+
+    it 'computes SHA-1 for an empty string' do
+      expect(described_class.sha1('')).to eq('da39a3ee5e6b4b0d3255bfef95601890afd80709')
+    end
+  end
+
   describe '.sha256' do
     it 'computes SHA-256 for a string' do
       expect(described_class.sha256('hello')).to eq('2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824')
@@ -67,6 +77,29 @@ RSpec.describe Philiprehberger::Checksum do
     it 'returns base64 when format is :base64' do
       result = described_class.crc32('hello', format: :base64)
       expect(result).to eq('NhCmhg==')
+    end
+  end
+
+  describe '.file_md5' do
+    it 'computes MD5 for a file' do
+      file = Tempfile.new('checksum-test')
+      file.write('hello')
+      file.close
+
+      expect(described_class.file_md5(file.path)).to eq(described_class.md5('hello'))
+    ensure
+      file&.unlink
+    end
+
+    it 'matches string checksum for file contents' do
+      content = 'the quick brown fox'
+      file = Tempfile.new('checksum-test')
+      file.write(content)
+      file.close
+
+      expect(described_class.file_md5(file.path)).to eq(described_class.md5(content))
+    ensure
+      file&.unlink
     end
   end
 
