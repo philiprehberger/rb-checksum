@@ -27,7 +27,7 @@ gem install philiprehberger-checksum
 ## Usage
 
 ```ruby
-require 'philiprehberger/checksum'
+require "philiprehberger/checksum"
 
 Philiprehberger::Checksum.sha256('hello')  # => "2cf24dba5fb0a30e..."
 ```
@@ -96,8 +96,8 @@ Philiprehberger::Checksum.sha256('hello', format: :base64)
 
 ```bash
 bundle install
-bundle exec rspec      # Run tests
-bundle exec rubocop    # Check code style
+bundle exec rspec
+bundle exec rubocop
 ```
 
 ## License
