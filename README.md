@@ -3,6 +3,7 @@
 [![Tests](https://github.com/philiprehberger/rb-checksum/actions/workflows/ci.yml/badge.svg)](https://github.com/philiprehberger/rb-checksum/actions/workflows/ci.yml)
 [![Gem Version](https://badge.fury.io/rb/philiprehberger-checksum.svg)](https://rubygems.org/gems/philiprehberger-checksum)
 [![License](https://img.shields.io/github/license/philiprehberger/rb-checksum)](LICENSE)
+[![Sponsor](https://img.shields.io/badge/sponsor-GitHub%20Sponsors-ec6cb9)](https://github.com/sponsors/philiprehberger)
 
 Simple file and string checksums with streaming support for large files
 
@@ -102,4 +103,4 @@ bundle exec rubocop
 
 ## License
 
-MIT
+[MIT](LICENSE)
