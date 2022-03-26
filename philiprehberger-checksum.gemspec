@@ -10,8 +10,8 @@ Gem::Specification.new do |spec|
 
   spec.summary = 'Simple file and string checksums with streaming support for large files'
   spec.description = 'Compute MD5, SHA-256, SHA-512, and CRC32 checksums for strings and files. ' \
-                       'File checksums use streaming reads for constant memory usage. Supports ' \
-                       'multi-algorithm single-pass computation and verification.'
+                     'File checksums use streaming reads for constant memory usage. Supports ' \
+                     'multi-algorithm single-pass computation and verification.'
   spec.homepage = 'https://philiprehberger.com/open-source-packages/ruby/philiprehberger-checksum'
   spec.license = 'MIT'
 
