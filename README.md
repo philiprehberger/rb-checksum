@@ -4,7 +4,7 @@
 [![Gem Version](https://badge.fury.io/rb/philiprehberger-checksum.svg)](https://rubygems.org/gems/philiprehberger-checksum)
 [![Last updated](https://img.shields.io/github/last-commit/philiprehberger/rb-checksum)](https://github.com/philiprehberger/rb-checksum/commits/main)
 
-Simple file and string checksums with streaming support for large files
+Simple file and string checksums with HMAC support and streaming for large files
 
 ## Requirements
 
@@ -49,6 +49,41 @@ File checksums use streaming reads in 8KB chunks for constant memory usage:
 ```ruby
 Philiprehberger::Checksum.file_md5('/path/to/file')
 Philiprehberger::Checksum.file_sha256('/path/to/file')
+Philiprehberger::Checksum.file_sha512('/path/to/file')
+```
+
+### Multi-File Hashing
+
+Hash multiple files in one call:
+
+```ruby
+digests = Philiprehberger::Checksum.files(['/path/to/a.txt', '/path/to/b.txt'], algo: :sha256)
+# => { "/path/to/a.txt" => "abc123...", "/path/to/b.txt" => "def456..." }
+```
+
+### HMAC
+
+Compute HMAC digests with a secret key:
+
+```ruby
+Philiprehberger::Checksum.hmac_sha256('message', key: 'secret')
+# => "8b5f48702995c1598c573db1e21866a9b825d4a794d169d7060a03605796360b"
+
+Philiprehberger::Checksum.hmac_sha512('message', key: 'secret')
+# => hex string
+
+Philiprehberger::Checksum.hmac_sha256('message', key: 'secret', format: :base64)
+# => base64 string
+```
+
+### HMAC Verification
+
+Verify an HMAC with timing-safe comparison:
+
+```ruby
+hmac = Philiprehberger::Checksum.hmac_sha256('message', key: 'secret')
+Philiprehberger::Checksum.verify_hmac?('message', hmac, key: 'secret')
+# => true
 ```
 
 ### Multi-Algorithm
@@ -87,10 +122,15 @@ Philiprehberger::Checksum.sha256('hello', format: :base64)
 | `Checksum.sha256(string, format: :hex)` | SHA-256 checksum of a string |
 | `Checksum.sha512(string, format: :hex)` | SHA-512 checksum of a string |
 | `Checksum.crc32(string, format: :hex)` | CRC32 checksum of a string |
+| `Checksum.hmac_sha256(string, key:, format: :hex)` | HMAC-SHA256 digest of a string |
+| `Checksum.hmac_sha512(string, key:, format: :hex)` | HMAC-SHA512 digest of a string |
 | `Checksum.file_md5(path, format: :hex)` | Streaming MD5 checksum of a file |
 | `Checksum.file_sha256(path, format: :hex)` | Streaming SHA-256 checksum of a file |
+| `Checksum.file_sha512(path, format: :hex)` | Streaming SHA-512 checksum of a file |
+| `Checksum.files(paths, algo:, format: :hex)` | Hash multiple files, returns `{ path => digest }` |
 | `Checksum.file_multi(path, *algos, format: :hex)` | Multi-algorithm single-pass file checksum |
 | `Checksum.verify?(path, format: :hex, **expected)` | Verify file against expected checksums |
+| `Checksum.verify_hmac?(string, expected, key:, algo:)` | Timing-safe HMAC verification |
 
 ## Development
 
