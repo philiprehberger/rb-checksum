@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-04-09
+
+### Added
+- `file_sha1` for streaming SHA-1 file checksums
+- `file_crc32` for streaming CRC32 file checksums
+- `digest(string, algo:, format:)` generic string checksum dispatch
+- `file_digest(path, algo:, format:)` generic file checksum dispatch
+
+### Fixed
+- `compare_files` now works with all algorithms including `:sha1` and `:crc32` (previously raised `NoMethodError`)
+
 ## [0.3.0] - 2026-04-04
 
 ### Added
@@ -61,3 +72,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Multi-algorithm single-pass file checksum computation
 - File checksum verification with timing-safe comparison
 - Hex and Base64 output format support
+
+[0.4.0]: https://github.com/philiprehberger/rb-checksum/releases/tag/v0.4.0
+[0.3.0]: https://github.com/philiprehberger/rb-checksum/releases/tag/v0.3.0
+[0.2.0]: https://github.com/philiprehberger/rb-checksum/releases/tag/v0.2.0
+[0.1.6]: https://github.com/philiprehberger/rb-checksum/releases/tag/v0.1.6
+[0.1.5]: https://github.com/philiprehberger/rb-checksum/releases/tag/v0.1.5
+[0.1.4]: https://github.com/philiprehberger/rb-checksum/releases/tag/v0.1.4
+[0.1.3]: https://github.com/philiprehberger/rb-checksum/releases/tag/v0.1.3
+[0.1.2]: https://github.com/philiprehberger/rb-checksum/releases/tag/v0.1.2
+[0.1.1]: https://github.com/philiprehberger/rb-checksum/releases/tag/v0.1.1
+[0.1.0]: https://github.com/philiprehberger/rb-checksum/releases/tag/v0.1.0

@@ -313,8 +313,8 @@ RSpec.describe Philiprehberger::Checksum do
       file_b.write('hello')
       file_b.close
 
-      expect(described_class).to receive(:file_sha256).with(file_a.path).and_call_original
-      expect(described_class).to receive(:file_sha256).with(file_b.path).and_call_original
+      expect(described_class).to receive(:file_digest).with(file_a.path, algo: :sha256).and_call_original
+      expect(described_class).to receive(:file_digest).with(file_b.path, algo: :sha256).and_call_original
       described_class.compare_files(file_a.path, file_b.path)
     ensure
       file_a&.unlink
@@ -336,6 +336,21 @@ RSpec.describe Philiprehberger::Checksum do
       file_b&.unlink
     end
 
+    it 'supports sha1 algorithm' do
+      file_a = Tempfile.new('checksum-a')
+      file_a.write('hello')
+      file_a.close
+
+      file_b = Tempfile.new('checksum-b')
+      file_b.write('hello')
+      file_b.close
+
+      expect(described_class.compare_files(file_a.path, file_b.path, algo: :sha1)).to be true
+    ensure
+      file_a&.unlink
+      file_b&.unlink
+    end
+
     it 'supports sha512 algorithm' do
       file_a = Tempfile.new('checksum-a')
       file_a.write('hello')
@@ -346,6 +361,21 @@ RSpec.describe Philiprehberger::Checksum do
       file_b.close
 
       expect(described_class.compare_files(file_a.path, file_b.path, algo: :sha512)).to be true
+    ensure
+      file_a&.unlink
+      file_b&.unlink
+    end
+
+    it 'supports crc32 algorithm' do
+      file_a = Tempfile.new('checksum-a')
+      file_a.write('hello')
+      file_a.close
+
+      file_b = Tempfile.new('checksum-b')
+      file_b.write('hello')
+      file_b.close
+
+      expect(described_class.compare_files(file_a.path, file_b.path, algo: :crc32)).to be true
     ensure
       file_a&.unlink
       file_b&.unlink
@@ -382,6 +412,129 @@ RSpec.describe Philiprehberger::Checksum do
     ensure
       file_a&.unlink
       file_b&.unlink
+    end
+  end
+
+  describe '.file_sha1' do
+    it 'computes SHA-1 for a file' do
+      file = Tempfile.new('checksum-test')
+      file.write('hello')
+      file.close
+
+      expect(described_class.file_sha1(file.path)).to eq(described_class.sha1('hello'))
+    ensure
+      file&.unlink
+    end
+
+    it 'handles empty files' do
+      file = Tempfile.new('checksum-test')
+      file.close
+
+      expect(described_class.file_sha1(file.path)).to eq(described_class.sha1(''))
+    ensure
+      file&.unlink
+    end
+
+    it 'raises Error for nonexistent file' do
+      expect { described_class.file_sha1('/nonexistent/file.txt') }.to raise_error(described_class::Error)
+    end
+  end
+
+  describe '.file_crc32' do
+    it 'computes CRC32 for a file' do
+      file = Tempfile.new('checksum-test')
+      file.write('hello')
+      file.close
+
+      expect(described_class.file_crc32(file.path)).to eq(described_class.crc32('hello'))
+    ensure
+      file&.unlink
+    end
+
+    it 'handles empty files' do
+      file = Tempfile.new('checksum-test')
+      file.close
+
+      expect(described_class.file_crc32(file.path)).to eq(described_class.crc32(''))
+    ensure
+      file&.unlink
+    end
+
+    it 'returns base64 when format is :base64' do
+      file = Tempfile.new('checksum-test')
+      file.write('hello')
+      file.close
+
+      expect(described_class.file_crc32(file.path, format: :base64)).to eq(
+        described_class.crc32('hello', format: :base64)
+      )
+    ensure
+      file&.unlink
+    end
+
+    it 'raises Error for nonexistent file' do
+      expect { described_class.file_crc32('/nonexistent/file.txt') }.to raise_error(described_class::Error)
+    end
+  end
+
+  describe '.digest' do
+    it 'dispatches to md5' do
+      expect(described_class.digest('hello', algo: :md5)).to eq(described_class.md5('hello'))
+    end
+
+    it 'dispatches to sha1' do
+      expect(described_class.digest('hello', algo: :sha1)).to eq(described_class.sha1('hello'))
+    end
+
+    it 'dispatches to sha256' do
+      expect(described_class.digest('hello', algo: :sha256)).to eq(described_class.sha256('hello'))
+    end
+
+    it 'dispatches to sha512' do
+      expect(described_class.digest('hello', algo: :sha512)).to eq(described_class.sha512('hello'))
+    end
+
+    it 'dispatches to crc32' do
+      expect(described_class.digest('hello', algo: :crc32)).to eq(described_class.crc32('hello'))
+    end
+
+    it 'supports base64 format' do
+      expect(described_class.digest('hello', algo: :sha256, format: :base64)).to eq(
+        described_class.sha256('hello', format: :base64)
+      )
+    end
+
+    it 'raises Error for unknown algorithm' do
+      expect { described_class.digest('hello', algo: :unknown) }.to raise_error(described_class::Error)
+    end
+  end
+
+  describe '.file_digest' do
+    it 'dispatches to all supported algorithms' do
+      file = Tempfile.new('checksum-test')
+      file.write('hello')
+      file.close
+
+      %i[md5 sha1 sha256 sha512 crc32].each do |algo|
+        expect(described_class.file_digest(file.path, algo: algo)).to eq(
+          described_class.digest('hello', algo: algo)
+        )
+      end
+    ensure
+      file&.unlink
+    end
+
+    it 'raises Error for unknown algorithm' do
+      file = Tempfile.new('checksum-test')
+      file.close
+
+      expect { described_class.file_digest(file.path, algo: :unknown) }.to raise_error(described_class::Error)
+    ensure
+      file&.unlink
+    end
+
+    it 'raises Error for nonexistent file' do
+      expect { described_class.file_digest('/nonexistent/file.txt', algo: :sha256) }.to raise_error(described_class::Error)
     end
   end
 
