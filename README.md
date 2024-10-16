@@ -112,6 +112,17 @@ Philiprehberger::Checksum.file_digest("/path/to/file", algo: :crc32)
 
 Both accept `:md5`, `:sha1`, `:sha256`, `:sha512`, and `:crc32`.
 
+### Directory Checksum
+
+Compute a combined checksum of all files in a directory:
+
+```ruby
+Philiprehberger::Checksum.directory_checksum('/path/to/dir')
+# => "a1b2c3d4..." (single SHA-256 digest of all files)
+
+Philiprehberger::Checksum.directory_checksum('/path/to/dir', algo: :md5)
+```
+
 ### Multi-Algorithm
 
 Compute multiple checksums in a single read pass:
@@ -161,6 +172,7 @@ Philiprehberger::Checksum.sha256('hello', format: :base64)
 | `Checksum.files(paths, algo:, format: :hex)` | Hash multiple files, returns `{ path => digest }` |
 | `Checksum.file_multi(path, *algos, format: :hex)` | Multi-algorithm single-pass file checksum |
 | `Checksum.verify?(path, format: :hex, **expected)` | Verify file against expected checksums |
+| `Checksum.directory_checksum(path, algo:, format:)` | Combined checksum of all files in a directory |
 | `Checksum.verify_hmac?(string, expected, key:, algo:)` | Timing-safe HMAC verification |
 
 ## Development
