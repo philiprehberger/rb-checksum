@@ -20,6 +20,7 @@ module Philiprehberger
     }.freeze
 
     HMAC_ALGORITHMS = {
+      sha1: 'SHA1',
       sha256: 'SHA256',
       sha512: 'SHA512'
     }.freeze
@@ -133,6 +134,16 @@ module Philiprehberger
       result
     end
 
+    # Compute an HMAC-SHA1 for a string
+    #
+    # @param string [String] the input string
+    # @param key [String] the HMAC key
+    # @param format [Symbol] output format (:hex or :base64)
+    # @return [String] the HMAC digest
+    def self.hmac_sha1(string, key:, format: :hex)
+      hmac_digest('SHA1', string, key, format: format)
+    end
+
     # Compute an HMAC-SHA256 for a string
     #
     # @param string [String] the input string
@@ -244,12 +255,50 @@ module Philiprehberger
       end
     end
 
+    # Verify a string's checksum with timing-safe comparison
+    #
+    # @param string [String] the input string
+    # @param expected [String] the expected checksum
+    # @param algo [Symbol] algorithm (:md5, :sha1, :sha256, :sha512, :crc32)
+    # @param format [Symbol] output format used for the expected value (:hex or :base64)
+    # @return [Boolean] true if the computed checksum matches
+    # @raise [Error] if the algorithm is unknown
+    def self.verify_string?(string, expected, algo: :sha256, format: :hex)
+      actual = digest(string, algo: algo, format: format)
+      secure_compare(actual, expected)
+    end
+
+    # Compute an HMAC for a file using streaming reads
+    #
+    # @param path [String] path to the file
+    # @param key [String] the HMAC key
+    # @param algo [Symbol] algorithm (:sha1, :sha256, :sha512)
+    # @param format [Symbol] output format (:hex or :base64)
+    # @return [String] the HMAC digest
+    # @raise [Error] if the file does not exist or the algorithm is unknown
+    def self.file_hmac(path, key:, algo: :sha256, format: :hex)
+      algo_name = HMAC_ALGORITHMS[algo]
+      raise Error, "unknown HMAC algorithm: #{algo}" unless algo_name
+
+      validate_file!(path)
+      hmac = OpenSSL::HMAC.new(key, algo_name)
+      File.open(path, 'rb') do |io|
+        hmac.update(io.read(CHUNK_SIZE)) until io.eof?
+      end
+
+      case format
+      when :hex then hmac.hexdigest
+      when :base64 then Base64.strict_encode64(hmac.digest)
+      else raise Error, "unknown format: #{format}"
+      end
+    end
+
     # Verify an HMAC with timing-safe comparison
     #
     # @param string [String] the input string
     # @param expected [String] the expected HMAC hex digest
     # @param key [String] the HMAC key
-    # @param algo [Symbol] algorithm (:sha256 or :sha512)
+    # @param algo [Symbol] algorithm (:sha1, :sha256, or :sha512)
     # @return [Boolean] true if the HMAC matches
     def self.verify_hmac?(string, expected, key:, algo: :sha256)
       algo_name = HMAC_ALGORITHMS[algo]
