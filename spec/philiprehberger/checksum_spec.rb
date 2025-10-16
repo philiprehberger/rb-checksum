@@ -50,6 +50,27 @@ RSpec.describe Philiprehberger::Checksum do
     end
   end
 
+  describe '.sha384' do
+    it 'computes SHA-384 for a string' do
+      result = described_class.sha384('hello')
+      expect(result).to be_a(String)
+      expect(result.length).to eq(96) # SHA-384 hex is 96 chars
+      expect(result).to match(/\A[0-9a-f]{96}\z/)
+    end
+
+    it 'computes SHA-384 for an empty string' do
+      expected = '38b060a751ac96384cd9327eb1b1e36a21fdb71114be07434c0cc7bf63f6e1da' \
+                 '274edebfe76f65fbd51ad2f14898b95b'
+      expect(described_class.sha384('')).to eq(expected)
+    end
+
+    it 'returns base64 when format is :base64' do
+      result = described_class.sha384('hello', format: :base64)
+      expect(result).to be_a(String)
+      expect(result).not_to match(/\A[0-9a-f]+\z/)
+    end
+  end
+
   describe '.sha512' do
     it 'computes SHA-512 for a string' do
       result = described_class.sha512('hello')
@@ -140,6 +161,29 @@ RSpec.describe Philiprehberger::Checksum do
     it 'handles empty string' do
       result = described_class.hmac_sha512('', key: 'key')
       expect(result).to eq(OpenSSL::HMAC.hexdigest('SHA512', 'key', ''))
+    end
+  end
+
+  describe '.file_sha384' do
+    it 'computes SHA-384 for a file' do
+      file = Tempfile.new('checksum-test')
+      file.write('hello')
+      file.close
+
+      expect(described_class.file_sha384(file.path)).to eq(described_class.sha384('hello'))
+    ensure
+      file&.unlink
+    end
+
+    it 'raises Error for nonexistent file' do
+      expect { described_class.file_sha384('/nonexistent/file.txt') }.to raise_error(described_class::Error)
+    end
+  end
+
+  describe '.hmac_sha384' do
+    it 'computes HMAC-SHA384 for a string' do
+      result = described_class.hmac_sha384('message', key: 'secret')
+      expect(result).to eq(OpenSSL::HMAC.hexdigest('SHA384', 'secret', 'message'))
     end
   end
 

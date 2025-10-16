@@ -38,6 +38,7 @@ Philiprehberger::Checksum.sha256('hello')  # => "2cf24dba5fb0a30e..."
 Philiprehberger::Checksum.md5('hello')     # => "5d41402abc4b2a76..."
 Philiprehberger::Checksum.sha1('hello')    # => "aaf4c61ddcc5e8a2..."
 Philiprehberger::Checksum.sha256('hello')  # => "2cf24dba5fb0a30e..."
+Philiprehberger::Checksum.sha384('hello')  # => "59e1748777448c69..."
 Philiprehberger::Checksum.sha512('hello')  # => "9b71d224bd62f378..."
 Philiprehberger::Checksum.crc32('hello')   # => "3610a686"
 ```
@@ -49,6 +50,7 @@ File checksums use streaming reads in 8KB chunks for constant memory usage:
 ```ruby
 Philiprehberger::Checksum.file_md5('/path/to/file')
 Philiprehberger::Checksum.file_sha256('/path/to/file')
+Philiprehberger::Checksum.file_sha384('/path/to/file')
 Philiprehberger::Checksum.file_sha512('/path/to/file')
 ```
 
@@ -83,6 +85,9 @@ Philiprehberger::Checksum.hmac_sha1('message', key: 'secret')
 
 Philiprehberger::Checksum.hmac_sha256('message', key: 'secret')
 # => "8b5f48702995c1598c573db1e21866a9b825d4a794d169d7060a03605796360b"
+
+Philiprehberger::Checksum.hmac_sha384('message', key: 'secret')
+# => hex string
 
 Philiprehberger::Checksum.hmac_sha512('message', key: 'secret')
 # => hex string
@@ -140,7 +145,7 @@ Philiprehberger::Checksum.file_digest("/path/to/file", algo: :crc32)
 # => "3610a686"
 ```
 
-Both accept `:md5`, `:sha1`, `:sha256`, `:sha512`, and `:crc32`.
+Both accept `:md5`, `:sha1`, `:sha256`, `:sha384`, `:sha512`, and `:crc32`.
 
 ### Directory Checksum
 

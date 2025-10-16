@@ -16,12 +16,14 @@ module Philiprehberger
       md5: Digest::MD5,
       sha1: Digest::SHA1,
       sha256: Digest::SHA256,
+      sha384: Digest::SHA384,
       sha512: Digest::SHA512
     }.freeze
 
     HMAC_ALGORITHMS = {
       sha1: 'SHA1',
       sha256: 'SHA256',
+      sha384: 'SHA384',
       sha512: 'SHA512'
     }.freeze
 
@@ -50,6 +52,15 @@ module Philiprehberger
     # @return [String] the checksum
     def self.sha256(string, format: :hex)
       digest_string(Digest::SHA256, string, format: format)
+    end
+
+    # Compute a SHA-384 checksum for a string
+    #
+    # @param string [String] the input string
+    # @param format [Symbol] output format (:hex or :base64)
+    # @return [String] the checksum
+    def self.sha384(string, format: :hex)
+      digest_string(Digest::SHA384, string, format: format)
     end
 
     # Compute a SHA-512 checksum for a string
@@ -154,6 +165,16 @@ module Philiprehberger
       hmac_digest('SHA256', string, key, format: format)
     end
 
+    # Compute an HMAC-SHA384 for a string
+    #
+    # @param string [String] the input string
+    # @param key [String] the HMAC key
+    # @param format [Symbol] output format (:hex or :base64)
+    # @return [String] the HMAC digest
+    def self.hmac_sha384(string, key:, format: :hex)
+      hmac_digest('SHA384', string, key, format: format)
+    end
+
     # Compute an HMAC-SHA512 for a string
     #
     # @param string [String] the input string
@@ -172,6 +193,16 @@ module Philiprehberger
     # @raise [Error] if the file does not exist or is not readable
     def self.file_sha1(path, format: :hex)
       digest_file(Digest::SHA1, path, format: format)
+    end
+
+    # Compute a SHA-384 checksum for a file using streaming reads
+    #
+    # @param path [String] path to the file
+    # @param format [Symbol] output format (:hex or :base64)
+    # @return [String] the checksum
+    # @raise [Error] if the file does not exist or is not readable
+    def self.file_sha384(path, format: :hex)
+      digest_file(Digest::SHA384, path, format: format)
     end
 
     # Compute a SHA-512 checksum for a file using streaming reads

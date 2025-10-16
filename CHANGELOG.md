@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-04-15
+
+### Added
+- `sha384(string, format:)` for SHA-384 string digests
+- `file_sha384(path, format:)` for streaming SHA-384 file checksums
+- `:sha384` now supported by the `digest` / `file_digest` / `file_multi` / `files` / `verify_string?` / `verify?` / `compare_files` / `directory_checksum` dispatchers (via `ALGORITHMS`)
+- `hmac_sha384(string, key:, format:)` via `HMAC_ALGORITHMS`; `file_hmac` and `verify_hmac?` now also accept `algo: :sha384`
+
 ## [0.6.0] - 2026-04-15
 
 ### Added
