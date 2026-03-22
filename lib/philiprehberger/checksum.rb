@@ -13,6 +13,7 @@ module Philiprehberger
     CHUNK_SIZE = 8192
     ALGORITHMS = {
       md5: Digest::MD5,
+      sha1: Digest::SHA1,
       sha256: Digest::SHA256,
       sha512: Digest::SHA512
     }.freeze
@@ -24,6 +25,15 @@ module Philiprehberger
     # @return [String] the checksum
     def self.md5(string, format: :hex)
       digest_string(Digest::MD5, string, format: format)
+    end
+
+    # Compute a SHA-1 checksum for a string
+    #
+    # @param string [String] the input string
+    # @param format [Symbol] output format (:hex or :base64)
+    # @return [String] the checksum
+    def self.sha1(string, format: :hex)
+      digest_string(Digest::SHA1, string, format: format)
     end
 
     # Compute a SHA-256 checksum for a string
@@ -52,6 +62,16 @@ module Philiprehberger
     def self.crc32(string, format: :hex)
       value = Zlib.crc32(string)
       format_crc32(value, format: format)
+    end
+
+    # Compute an MD5 checksum for a file using streaming reads
+    #
+    # @param path [String] path to the file
+    # @param format [Symbol] output format (:hex or :base64)
+    # @return [String] the checksum
+    # @raise [Error] if the file does not exist or is not readable
+    def self.file_md5(path, format: :hex)
+      digest_file(Digest::MD5, path, format: format)
     end
 
     # Compute a SHA-256 checksum for a file using streaming reads
