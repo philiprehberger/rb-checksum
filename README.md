@@ -15,7 +15,7 @@ Simple file and string checksums with streaming support for large files
 Add to your Gemfile:
 
 ```ruby
-gem 'philiprehberger-checksum'
+gem "philiprehberger-checksum"
 ```
 
 Or install directly:
