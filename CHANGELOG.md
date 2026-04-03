@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-04-03
+
+### Added
+- HMAC-SHA256 and HMAC-SHA512 via `hmac_sha256` and `hmac_sha512`
+- `file_sha512` for SHA-512 file hashing
+- `files` method for hashing multiple files in one call
+- `verify_hmac?` for timing-safe HMAC verification
+
 ## [0.1.6] - 2026-03-31
 
 ### Added

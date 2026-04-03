@@ -80,6 +80,243 @@ RSpec.describe Philiprehberger::Checksum do
     end
   end
 
+  describe '.hmac_sha256' do
+    it 'computes HMAC-SHA256 with known test vector' do
+      # RFC 4231 test vector
+      result = described_class.hmac_sha256('Hi There', key: "\x0b" * 20)
+      expect(result).to eq('b0344c61d8db38535ca8afceaf0bf12b881dc200c9833da726e9376c2e32cff7')
+    end
+
+    it 'computes HMAC-SHA256 with string key' do
+      result = described_class.hmac_sha256('message', key: 'secret')
+      expect(result).to eq(OpenSSL::HMAC.hexdigest('SHA256', 'secret', 'message'))
+    end
+
+    it 'returns hex format by default' do
+      result = described_class.hmac_sha256('hello', key: 'key')
+      expect(result).to match(/\A[0-9a-f]{64}\z/)
+    end
+
+    it 'returns base64 when format is :base64' do
+      result = described_class.hmac_sha256('hello', key: 'key', format: :base64)
+      expect(result).to be_a(String)
+      expect(result.length).to be > 0
+      # Verify it decodes correctly
+      decoded = Base64.strict_decode64(result)
+      expect(decoded.bytesize).to eq(32) # SHA-256 is 32 bytes
+    end
+
+    it 'handles empty string' do
+      result = described_class.hmac_sha256('', key: 'key')
+      expect(result).to eq(OpenSSL::HMAC.hexdigest('SHA256', 'key', ''))
+    end
+
+    it 'handles empty key' do
+      result = described_class.hmac_sha256('hello', key: '')
+      expect(result).to eq(OpenSSL::HMAC.hexdigest('SHA256', '', 'hello'))
+    end
+  end
+
+  describe '.hmac_sha512' do
+    it 'computes HMAC-SHA512 with known test vector' do
+      # RFC 4231 test vector
+      result = described_class.hmac_sha512('Hi There', key: "\x0b" * 20)
+      expect(result).to eq(
+        '87aa7cdea5ef619d4ff0b4241a1d6cb02379f4e2ce4ec2787ad0b30545e17cde' \
+        'daa833b7d6b8a702038b274eaea3f4e4be9d914eeb61f1702e696c203a126854'
+      )
+    end
+
+    it 'computes HMAC-SHA512 with string key' do
+      result = described_class.hmac_sha512('message', key: 'secret')
+      expect(result).to eq(OpenSSL::HMAC.hexdigest('SHA512', 'secret', 'message'))
+    end
+
+    it 'returns hex format with 128 chars' do
+      result = described_class.hmac_sha512('hello', key: 'key')
+      expect(result).to match(/\A[0-9a-f]{128}\z/)
+    end
+
+    it 'handles empty string' do
+      result = described_class.hmac_sha512('', key: 'key')
+      expect(result).to eq(OpenSSL::HMAC.hexdigest('SHA512', 'key', ''))
+    end
+  end
+
+  describe '.file_sha512' do
+    it 'computes SHA-512 for a file' do
+      file = Tempfile.new('checksum-test')
+      file.write('hello')
+      file.close
+
+      expect(described_class.file_sha512(file.path)).to eq(described_class.sha512('hello'))
+    ensure
+      file&.unlink
+    end
+
+    it 'matches string checksum for file contents' do
+      content = 'the quick brown fox'
+      file = Tempfile.new('checksum-test')
+      file.write(content)
+      file.close
+
+      expect(described_class.file_sha512(file.path)).to eq(described_class.sha512(content))
+    ensure
+      file&.unlink
+    end
+
+    it 'handles empty files' do
+      file = Tempfile.new('checksum-test')
+      file.close
+
+      expect(described_class.file_sha512(file.path)).to eq(described_class.sha512(''))
+    ensure
+      file&.unlink
+    end
+
+    it 'raises Error for nonexistent file' do
+      expect { described_class.file_sha512('/nonexistent/file.txt') }.to raise_error(described_class::Error)
+    end
+
+    it 'returns base64 when format is :base64' do
+      file = Tempfile.new('checksum-test')
+      file.write('hello')
+      file.close
+
+      expect(described_class.file_sha512(file.path, format: :base64)).to eq(
+        described_class.sha512('hello', format: :base64)
+      )
+    ensure
+      file&.unlink
+    end
+  end
+
+  describe '.files' do
+    it 'hashes multiple files with default sha256' do
+      file_a = Tempfile.new('checksum-a')
+      file_a.write('alpha')
+      file_a.close
+
+      file_b = Tempfile.new('checksum-b')
+      file_b.write('beta')
+      file_b.close
+
+      result = described_class.files([file_a.path, file_b.path])
+      expect(result).to be_a(Hash)
+      expect(result[file_a.path]).to eq(described_class.sha256('alpha'))
+      expect(result[file_b.path]).to eq(described_class.sha256('beta'))
+    ensure
+      file_a&.unlink
+      file_b&.unlink
+    end
+
+    it 'supports md5 algorithm' do
+      file = Tempfile.new('checksum-test')
+      file.write('hello')
+      file.close
+
+      result = described_class.files([file.path], algo: :md5)
+      expect(result[file.path]).to eq(described_class.md5('hello'))
+    ensure
+      file&.unlink
+    end
+
+    it 'supports sha512 algorithm' do
+      file = Tempfile.new('checksum-test')
+      file.write('hello')
+      file.close
+
+      result = described_class.files([file.path], algo: :sha512)
+      expect(result[file.path]).to eq(described_class.sha512('hello'))
+    ensure
+      file&.unlink
+    end
+
+    it 'supports sha1 algorithm' do
+      file = Tempfile.new('checksum-test')
+      file.write('hello')
+      file.close
+
+      result = described_class.files([file.path], algo: :sha1)
+      expect(result[file.path]).to eq(described_class.sha1('hello'))
+    ensure
+      file&.unlink
+    end
+
+    it 'raises Error for unknown algorithm' do
+      file = Tempfile.new('checksum-test')
+      file.close
+
+      expect { described_class.files([file.path], algo: :unknown) }.to raise_error(described_class::Error)
+    ensure
+      file&.unlink
+    end
+
+    it 'raises Error for nonexistent file' do
+      expect { described_class.files(['/nonexistent/file.txt']) }.to raise_error(described_class::Error)
+    end
+
+    it 'returns empty hash for empty paths array' do
+      result = described_class.files([])
+      expect(result).to eq({})
+    end
+
+    it 'supports base64 format' do
+      file = Tempfile.new('checksum-test')
+      file.write('hello')
+      file.close
+
+      result = described_class.files([file.path], algo: :sha256, format: :base64)
+      expect(result[file.path]).to eq(described_class.sha256('hello', format: :base64))
+    ensure
+      file&.unlink
+    end
+  end
+
+  describe '.verify_hmac?' do
+    it 'returns true for correct HMAC' do
+      hmac = described_class.hmac_sha256('message', key: 'secret')
+      expect(described_class.verify_hmac?('message', hmac, key: 'secret')).to be true
+    end
+
+    it 'returns false for incorrect HMAC' do
+      expect(described_class.verify_hmac?('message', 'wrong', key: 'secret')).to be false
+    end
+
+    it 'returns false for tampered message' do
+      hmac = described_class.hmac_sha256('message', key: 'secret')
+      expect(described_class.verify_hmac?('tampered', hmac, key: 'secret')).to be false
+    end
+
+    it 'returns false for wrong key' do
+      hmac = described_class.hmac_sha256('message', key: 'secret')
+      expect(described_class.verify_hmac?('message', hmac, key: 'wrong')).to be false
+    end
+
+    it 'supports sha512 algorithm' do
+      hmac = described_class.hmac_sha512('message', key: 'secret')
+      expect(described_class.verify_hmac?('message', hmac, key: 'secret', algo: :sha512)).to be true
+    end
+
+    it 'returns false for sha512 with wrong value' do
+      expect(described_class.verify_hmac?('message', 'wrong', key: 'secret', algo: :sha512)).to be false
+    end
+
+    it 'raises Error for unknown algorithm' do
+      expect { described_class.verify_hmac?('msg', 'hmac', key: 'k', algo: :md5) }.to raise_error(described_class::Error)
+    end
+
+    it 'handles empty string' do
+      hmac = described_class.hmac_sha256('', key: 'secret')
+      expect(described_class.verify_hmac?('', hmac, key: 'secret')).to be true
+    end
+
+    it 'handles empty key' do
+      hmac = described_class.hmac_sha256('hello', key: '')
+      expect(described_class.verify_hmac?('hello', hmac, key: '')).to be true
+    end
+  end
+
   describe '.file_md5' do
     it 'computes MD5 for a file' do
       file = Tempfile.new('checksum-test')

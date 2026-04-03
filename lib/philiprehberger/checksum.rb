@@ -2,6 +2,7 @@
 
 require 'base64'
 require 'digest'
+require 'openssl'
 require 'zlib'
 
 require_relative 'checksum/version'
@@ -16,6 +17,11 @@ module Philiprehberger
       sha1: Digest::SHA1,
       sha256: Digest::SHA256,
       sha512: Digest::SHA512
+    }.freeze
+
+    HMAC_ALGORITHMS = {
+      sha256: 'SHA256',
+      sha512: 'SHA512'
     }.freeze
 
     # Compute an MD5 checksum for a string
@@ -127,6 +133,67 @@ module Philiprehberger
       result
     end
 
+    # Compute an HMAC-SHA256 for a string
+    #
+    # @param string [String] the input string
+    # @param key [String] the HMAC key
+    # @param format [Symbol] output format (:hex or :base64)
+    # @return [String] the HMAC digest
+    def self.hmac_sha256(string, key:, format: :hex)
+      hmac_digest('SHA256', string, key, format: format)
+    end
+
+    # Compute an HMAC-SHA512 for a string
+    #
+    # @param string [String] the input string
+    # @param key [String] the HMAC key
+    # @param format [Symbol] output format (:hex or :base64)
+    # @return [String] the HMAC digest
+    def self.hmac_sha512(string, key:, format: :hex)
+      hmac_digest('SHA512', string, key, format: format)
+    end
+
+    # Compute a SHA-512 checksum for a file using streaming reads
+    #
+    # @param path [String] path to the file
+    # @param format [Symbol] output format (:hex or :base64)
+    # @return [String] the checksum
+    # @raise [Error] if the file does not exist or is not readable
+    def self.file_sha512(path, format: :hex)
+      digest_file(Digest::SHA512, path, format: format)
+    end
+
+    # Hash multiple files, returning a hash of { path => digest }
+    #
+    # @param paths [Array<String>] file paths to hash
+    # @param algo [Symbol] algorithm (:md5, :sha1, :sha256, :sha512)
+    # @param format [Symbol] output format (:hex or :base64)
+    # @return [Hash<String, String>] path => digest pairs
+    # @raise [Error] if any file does not exist or an unknown algorithm is given
+    def self.files(paths, algo: :sha256, format: :hex)
+      klass = ALGORITHMS[algo]
+      raise Error, "unknown algorithm: #{algo}" unless klass
+
+      paths.to_h do |path|
+        [path, digest_file(klass, path, format: format)]
+      end
+    end
+
+    # Verify an HMAC with timing-safe comparison
+    #
+    # @param string [String] the input string
+    # @param expected [String] the expected HMAC hex digest
+    # @param key [String] the HMAC key
+    # @param algo [Symbol] algorithm (:sha256 or :sha512)
+    # @return [Boolean] true if the HMAC matches
+    def self.verify_hmac?(string, expected, key:, algo: :sha256)
+      algo_name = HMAC_ALGORITHMS[algo]
+      raise Error, "unknown HMAC algorithm: #{algo}" unless algo_name
+
+      actual = hmac_digest(algo_name, string, key, format: :hex)
+      secure_compare(actual, expected)
+    end
+
     # Verify a file's checksum against expected values
     #
     # @param path [String] path to the file
@@ -189,6 +256,17 @@ module Philiprehberger
       raise Error, "file not readable: #{path}" unless File.readable?(path)
     end
     private_class_method :validate_file!
+
+    # @api private
+    def self.hmac_digest(algo_name, string, key, format: :hex)
+      raw = OpenSSL::HMAC.digest(algo_name, key, string)
+      case format
+      when :hex then OpenSSL::HMAC.hexdigest(algo_name, key, string)
+      when :base64 then Base64.strict_encode64(raw)
+      else raise Error, "unknown format: #{format}"
+      end
+    end
+    private_class_method :hmac_digest
 
     # @api private
     def self.secure_compare(actual, expected)
