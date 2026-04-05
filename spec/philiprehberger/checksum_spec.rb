@@ -273,6 +273,118 @@ RSpec.describe Philiprehberger::Checksum do
     end
   end
 
+  describe '.compare_files' do
+    it 'returns true for files with identical content' do
+      file_a = Tempfile.new('checksum-a')
+      file_a.write('hello')
+      file_a.close
+
+      file_b = Tempfile.new('checksum-b')
+      file_b.write('hello')
+      file_b.close
+
+      expect(described_class.compare_files(file_a.path, file_b.path)).to be true
+    ensure
+      file_a&.unlink
+      file_b&.unlink
+    end
+
+    it 'returns false for files with different content' do
+      file_a = Tempfile.new('checksum-a')
+      file_a.write('hello')
+      file_a.close
+
+      file_b = Tempfile.new('checksum-b')
+      file_b.write('world')
+      file_b.close
+
+      expect(described_class.compare_files(file_a.path, file_b.path)).to be false
+    ensure
+      file_a&.unlink
+      file_b&.unlink
+    end
+
+    it 'uses sha256 by default' do
+      file_a = Tempfile.new('checksum-a')
+      file_a.write('hello')
+      file_a.close
+
+      file_b = Tempfile.new('checksum-b')
+      file_b.write('hello')
+      file_b.close
+
+      expect(described_class).to receive(:file_sha256).with(file_a.path).and_call_original
+      expect(described_class).to receive(:file_sha256).with(file_b.path).and_call_original
+      described_class.compare_files(file_a.path, file_b.path)
+    ensure
+      file_a&.unlink
+      file_b&.unlink
+    end
+
+    it 'supports md5 algorithm' do
+      file_a = Tempfile.new('checksum-a')
+      file_a.write('hello')
+      file_a.close
+
+      file_b = Tempfile.new('checksum-b')
+      file_b.write('hello')
+      file_b.close
+
+      expect(described_class.compare_files(file_a.path, file_b.path, algo: :md5)).to be true
+    ensure
+      file_a&.unlink
+      file_b&.unlink
+    end
+
+    it 'supports sha512 algorithm' do
+      file_a = Tempfile.new('checksum-a')
+      file_a.write('hello')
+      file_a.close
+
+      file_b = Tempfile.new('checksum-b')
+      file_b.write('hello')
+      file_b.close
+
+      expect(described_class.compare_files(file_a.path, file_b.path, algo: :sha512)).to be true
+    ensure
+      file_a&.unlink
+      file_b&.unlink
+    end
+
+    it 'raises Error for nonexistent file' do
+      file = Tempfile.new('checksum-test')
+      file.write('hello')
+      file.close
+
+      expect { described_class.compare_files('/nonexistent/file.txt', file.path) }.to raise_error(described_class::Error)
+    ensure
+      file&.unlink
+    end
+
+    it 'returns true when comparing a file to itself' do
+      file = Tempfile.new('checksum-test')
+      file.write('hello')
+      file.close
+
+      expect(described_class.compare_files(file.path, file.path)).to be true
+    ensure
+      file&.unlink
+    end
+
+    it 'returns true for two empty files' do
+      file_a = Tempfile.new('checksum-a')
+      file_a.close
+
+      file_b = Tempfile.new('checksum-b')
+      file_b.close
+
+      expect(described_class.compare_files(file_a.path, file_b.path)).to be true
+    ensure
+      file_a&.unlink
+      file_b&.unlink
+    end
+  end
+
   describe '.verify_hmac?' do
     it 'returns true for correct HMAC' do
       hmac = described_class.hmac_sha256('message', key: 'secret')

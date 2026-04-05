@@ -163,6 +163,18 @@ module Philiprehberger
       digest_file(Digest::SHA512, path, format: format)
     end
 
+    # Compare two files by checksum
+    #
+    # @param path1 [String] path to the first file
+    # @param path2 [String] path to the second file
+    # @param algo [Symbol] algorithm to use (:md5, :sha1, :sha256, :sha512)
+    # @return [Boolean] true if both files have the same checksum
+    # @raise [Error] if either file does not exist or is not readable
+    def self.compare_files(path1, path2, algo: :sha256)
+      file_method = :"file_#{algo}"
+      send(file_method, path1) == send(file_method, path2)
+    end
+
     # Hash multiple files, returning a hash of { path => digest }
     #
     # @param paths [Array<String>] file paths to hash
