@@ -153,6 +153,16 @@ module Philiprehberger
       hmac_digest('SHA512', string, key, format: format)
     end
 
+    # Compute a SHA-1 checksum for a file using streaming reads
+    #
+    # @param path [String] path to the file
+    # @param format [Symbol] output format (:hex or :base64)
+    # @return [String] the checksum
+    # @raise [Error] if the file does not exist or is not readable
+    def self.file_sha1(path, format: :hex)
+      digest_file(Digest::SHA1, path, format: format)
+    end
+
     # Compute a SHA-512 checksum for a file using streaming reads
     #
     # @param path [String] path to the file
@@ -163,16 +173,62 @@ module Philiprehberger
       digest_file(Digest::SHA512, path, format: format)
     end
 
+    # Compute a CRC32 checksum for a file using streaming reads
+    #
+    # @param path [String] path to the file
+    # @param format [Symbol] output format (:hex or :base64)
+    # @return [String] the checksum
+    # @raise [Error] if the file does not exist or is not readable
+    def self.file_crc32(path, format: :hex)
+      validate_file!(path)
+      value = 0
+      File.open(path, 'rb') do |io|
+        value = Zlib.crc32(io.read(CHUNK_SIZE), value) until io.eof?
+      end
+      format_crc32(value, format: format)
+    end
+
+    # Compute a checksum for a string using any supported algorithm
+    #
+    # @param string [String] the input string
+    # @param algo [Symbol] algorithm (:md5, :sha1, :sha256, :sha512, :crc32)
+    # @param format [Symbol] output format (:hex or :base64)
+    # @return [String] the checksum
+    # @raise [Error] if the algorithm is unknown
+    def self.digest(string, algo:, format: :hex)
+      return crc32(string, format: format) if algo == :crc32
+
+      klass = ALGORITHMS[algo]
+      raise Error, "unknown algorithm: #{algo}" unless klass
+
+      digest_string(klass, string, format: format)
+    end
+
+    # Compute a checksum for a file using any supported algorithm
+    #
+    # @param path [String] path to the file
+    # @param algo [Symbol] algorithm (:md5, :sha1, :sha256, :sha512, :crc32)
+    # @param format [Symbol] output format (:hex or :base64)
+    # @return [String] the checksum
+    # @raise [Error] if the file does not exist or the algorithm is unknown
+    def self.file_digest(path, algo:, format: :hex)
+      return file_crc32(path, format: format) if algo == :crc32
+
+      klass = ALGORITHMS[algo]
+      raise Error, "unknown algorithm: #{algo}" unless klass
+
+      digest_file(klass, path, format: format)
+    end
+
     # Compare two files by checksum
     #
     # @param path1 [String] path to the first file
     # @param path2 [String] path to the second file
-    # @param algo [Symbol] algorithm to use (:md5, :sha1, :sha256, :sha512)
+    # @param algo [Symbol] algorithm to use (:md5, :sha1, :sha256, :sha512, :crc32)
     # @return [Boolean] true if both files have the same checksum
     # @raise [Error] if either file does not exist or is not readable
     def self.compare_files(path1, path2, algo: :sha256)
-      file_method = :"file_#{algo}"
-      send(file_method, path1) == send(file_method, path2)
+      file_digest(path1, algo: algo) == file_digest(path2, algo: algo)
     end
 
     # Hash multiple files, returning a hash of { path => digest }

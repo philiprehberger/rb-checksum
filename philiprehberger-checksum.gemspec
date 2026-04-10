@@ -9,10 +9,11 @@ Gem::Specification.new do |spec|
   spec.email = ['me@philiprehberger.com']
 
   spec.summary = 'Simple file and string checksums with HMAC support and streaming for large files'
-  spec.description = 'Compute MD5, SHA-256, SHA-512, and CRC32 checksums for strings and files. ' \
+  spec.description = 'Compute MD5, SHA-1, SHA-256, SHA-512, and CRC32 checksums for strings and files. ' \
                      'HMAC-SHA256 and HMAC-SHA512 with timing-safe verification. File checksums ' \
-                     'use streaming reads for constant memory usage. Supports multi-algorithm ' \
-                     'single-pass computation, multi-file hashing, and verification.'
+                     'use streaming reads for constant memory usage. Supports generic dispatch via ' \
+                     'digest/file_digest, multi-algorithm single-pass computation, multi-file ' \
+                     'hashing, file comparison, and verification.'
   spec.homepage = 'https://philiprehberger.com/open-source-packages/ruby/philiprehberger-checksum'
   spec.license = 'MIT'
 

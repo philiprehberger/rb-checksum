@@ -98,6 +98,20 @@ Philiprehberger::Checksum.verify_hmac?('message', hmac, key: 'secret')
 # => true
 ```
 
+### Generic Dispatch
+
+Use `digest` and `file_digest` when the algorithm is determined at runtime:
+
+```ruby
+Philiprehberger::Checksum.digest("hello", algo: :sha256)
+# => "2cf24dba5fb0a30e..."
+
+Philiprehberger::Checksum.file_digest("/path/to/file", algo: :crc32)
+# => "3610a686"
+```
+
+Both accept `:md5`, `:sha1`, `:sha256`, `:sha512`, and `:crc32`.
+
 ### Multi-Algorithm
 
 Compute multiple checksums in a single read pass:
@@ -136,9 +150,13 @@ Philiprehberger::Checksum.sha256('hello', format: :base64)
 | `Checksum.crc32(string, format: :hex)` | CRC32 checksum of a string |
 | `Checksum.hmac_sha256(string, key:, format: :hex)` | HMAC-SHA256 digest of a string |
 | `Checksum.hmac_sha512(string, key:, format: :hex)` | HMAC-SHA512 digest of a string |
+| `Checksum.digest(string, algo:, format: :hex)` | Checksum of a string using any algorithm |
+| `Checksum.file_digest(path, algo:, format: :hex)` | Streaming file checksum using any algorithm |
 | `Checksum.file_md5(path, format: :hex)` | Streaming MD5 checksum of a file |
+| `Checksum.file_sha1(path, format: :hex)` | Streaming SHA-1 checksum of a file |
 | `Checksum.file_sha256(path, format: :hex)` | Streaming SHA-256 checksum of a file |
 | `Checksum.file_sha512(path, format: :hex)` | Streaming SHA-512 checksum of a file |
+| `Checksum.file_crc32(path, format: :hex)` | Streaming CRC32 checksum of a file |
 | `Checksum.compare_files(path1, path2, algo: :sha256)` | Compare two files by checksum |
 | `Checksum.files(paths, algo:, format: :hex)` | Hash multiple files, returns `{ path => digest }` |
 | `Checksum.file_multi(path, *algos, format: :hex)` | Multi-algorithm single-pass file checksum |
