@@ -710,6 +710,99 @@ RSpec.describe Philiprehberger::Checksum do
     end
   end
 
+  describe '.files with crc32' do
+    it 'supports crc32 algorithm' do
+      file = Tempfile.new('checksum-test')
+      file.write('hello')
+      file.close
+
+      result = described_class.files([file.path], algo: :crc32)
+      expect(result[file.path]).to eq(described_class.crc32('hello'))
+    ensure
+      file&.unlink
+    end
+  end
+
+  describe '.directory_checksum' do
+    it 'computes a combined checksum for a directory' do
+      dir = Dir.mktmpdir
+      File.write(File.join(dir, 'a.txt'), 'alpha')
+      File.write(File.join(dir, 'b.txt'), 'beta')
+
+      result = described_class.directory_checksum(dir)
+      expect(result).to be_a(String)
+      expect(result).to match(/\A[0-9a-f]{64}\z/)
+    ensure
+      FileUtils.rm_rf(dir)
+    end
+
+    it 'returns different checksums for different contents' do
+      dir1 = Dir.mktmpdir
+      File.write(File.join(dir1, 'a.txt'), 'alpha')
+
+      dir2 = Dir.mktmpdir
+      File.write(File.join(dir2, 'a.txt'), 'beta')
+
+      expect(described_class.directory_checksum(dir1)).not_to eq(described_class.directory_checksum(dir2))
+    ensure
+      FileUtils.rm_rf(dir1)
+      FileUtils.rm_rf(dir2)
+    end
+
+    it 'returns same checksum for identical directories' do
+      dir1 = Dir.mktmpdir
+      File.write(File.join(dir1, 'a.txt'), 'hello')
+
+      dir2 = Dir.mktmpdir
+      File.write(File.join(dir2, 'a.txt'), 'hello')
+
+      expect(described_class.directory_checksum(dir1)).to eq(described_class.directory_checksum(dir2))
+    ensure
+      FileUtils.rm_rf(dir1)
+      FileUtils.rm_rf(dir2)
+    end
+
+    it 'detects different filenames with same content' do
+      dir1 = Dir.mktmpdir
+      File.write(File.join(dir1, 'a.txt'), 'hello')
+
+      dir2 = Dir.mktmpdir
+      File.write(File.join(dir2, 'b.txt'), 'hello')
+
+      expect(described_class.directory_checksum(dir1)).not_to eq(described_class.directory_checksum(dir2))
+    ensure
+      FileUtils.rm_rf(dir1)
+      FileUtils.rm_rf(dir2)
+    end
+
+    it 'handles empty directories' do
+      dir = Dir.mktmpdir
+      result = described_class.directory_checksum(dir)
+      expect(result).to be_a(String)
+    ensure
+      FileUtils.rm_rf(dir)
+    end
+
+    it 'supports md5 algorithm' do
+      dir = Dir.mktmpdir
+      File.write(File.join(dir, 'a.txt'), 'hello')
+
+      result = described_class.directory_checksum(dir, algo: :md5)
+      expect(result).to match(/\A[0-9a-f]{32}\z/)
+    ensure
+      FileUtils.rm_rf(dir)
+    end
+
+    it 'raises Error for non-directory path' do
+      file = Tempfile.new('checksum-test')
+      file.close
+
+      expect { described_class.directory_checksum(file.path) }.to raise_error(described_class::Error)
+    ensure
+      file&.unlink
+    end
+  end
+
   describe '.verify?' do
     it 'returns true when checksum matches' do
       file = Tempfile.new('checksum-test')

@@ -234,16 +234,13 @@ module Philiprehberger
     # Hash multiple files, returning a hash of { path => digest }
     #
     # @param paths [Array<String>] file paths to hash
-    # @param algo [Symbol] algorithm (:md5, :sha1, :sha256, :sha512)
+    # @param algo [Symbol] algorithm (:md5, :sha1, :sha256, :sha512, :crc32)
     # @param format [Symbol] output format (:hex or :base64)
     # @return [Hash<String, String>] path => digest pairs
     # @raise [Error] if any file does not exist or an unknown algorithm is given
     def self.files(paths, algo: :sha256, format: :hex)
-      klass = ALGORITHMS[algo]
-      raise Error, "unknown algorithm: #{algo}" unless klass
-
       paths.to_h do |path|
-        [path, digest_file(klass, path, format: format)]
+        [path, file_digest(path, algo: algo, format: format)]
       end
     end
 
@@ -276,6 +273,34 @@ module Philiprehberger
       expected.all? do |algo, expected_value|
         secure_compare(actual[algo], expected_value)
       end
+    end
+
+    # Compute a combined checksum of all files in a directory.
+    #
+    # Hashes each file's relative path and content checksum in sorted order,
+    # then produces a single digest. Useful for cache invalidation.
+    #
+    # @param path [String] path to the directory
+    # @param algo [Symbol] algorithm (:md5, :sha1, :sha256, :sha512)
+    # @param format [Symbol] output format (:hex or :base64)
+    # @return [String] the combined checksum
+    # @raise [Error] if the path is not a directory or algorithm is unknown
+    def self.directory_checksum(path, algo: :sha256, format: :hex)
+      raise Error, "not a directory: #{path}" unless File.directory?(path)
+
+      klass = ALGORITHMS[algo]
+      raise Error, "unknown algorithm: #{algo}" unless klass
+
+      file_paths = Dir.glob(File.join(path, '**', '*')).select { |f| File.file?(f) }.sort
+      combined = klass.new
+
+      file_paths.each do |file_path|
+        relative = file_path.delete_prefix("#{path}/")
+        combined.update(relative)
+        combined.update(digest_file(klass, file_path, format: :hex))
+      end
+
+      format_output(combined, format: format)
     end
 
     # @api private
