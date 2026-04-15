@@ -78,6 +78,9 @@ digests = Philiprehberger::Checksum.files(['/path/to/a.txt', '/path/to/b.txt'], 
 Compute HMAC digests with a secret key:
 
 ```ruby
+Philiprehberger::Checksum.hmac_sha1('message', key: 'secret')
+# => "0caf649feee4953d87bf903ac1176c45e028df16"
+
 Philiprehberger::Checksum.hmac_sha256('message', key: 'secret')
 # => "8b5f48702995c1598c573db1e21866a9b825d4a794d169d7060a03605796360b"
 
@@ -88,6 +91,20 @@ Philiprehberger::Checksum.hmac_sha256('message', key: 'secret', format: :base64)
 # => base64 string
 ```
 
+### File HMAC
+
+Stream an HMAC over a file's contents without loading it into memory:
+
+```ruby
+Philiprehberger::Checksum.file_hmac('/path/to/file', key: 'secret')
+# => "8b5f48702995c1598c573db1e21866a9b825d4a794d169d7060a03605796360b"
+
+Philiprehberger::Checksum.file_hmac('/path/to/file', key: 'secret', algo: :sha512)
+# => hex string
+
+Philiprehberger::Checksum.file_hmac('/path/to/file', key: 'secret', format: :base64)
+```
+
 ### HMAC Verification
 
 Verify an HMAC with timing-safe comparison:
@@ -96,6 +113,19 @@ Verify an HMAC with timing-safe comparison:
 hmac = Philiprehberger::Checksum.hmac_sha256('message', key: 'secret')
 Philiprehberger::Checksum.verify_hmac?('message', hmac, key: 'secret')
 # => true
+```
+
+### String Verification
+
+Verify a string against an expected checksum with timing-safe comparison:
+
+```ruby
+expected = Philiprehberger::Checksum.sha256('hello')
+Philiprehberger::Checksum.verify_string?('hello', expected)
+# => true
+
+Philiprehberger::Checksum.verify_string?('hello', 'wrong', algo: :md5)
+# => false
 ```
 
 ### Generic Dispatch
@@ -159,8 +189,10 @@ Philiprehberger::Checksum.sha256('hello', format: :base64)
 | `Checksum.sha256(string, format: :hex)` | SHA-256 checksum of a string |
 | `Checksum.sha512(string, format: :hex)` | SHA-512 checksum of a string |
 | `Checksum.crc32(string, format: :hex)` | CRC32 checksum of a string |
+| `Checksum.hmac_sha1(string, key:, format: :hex)` | HMAC-SHA1 digest of a string |
 | `Checksum.hmac_sha256(string, key:, format: :hex)` | HMAC-SHA256 digest of a string |
 | `Checksum.hmac_sha512(string, key:, format: :hex)` | HMAC-SHA512 digest of a string |
+| `Checksum.file_hmac(path, key:, algo: :sha256, format: :hex)` | Streaming HMAC digest of a file |
 | `Checksum.digest(string, algo:, format: :hex)` | Checksum of a string using any algorithm |
 | `Checksum.file_digest(path, algo:, format: :hex)` | Streaming file checksum using any algorithm |
 | `Checksum.file_md5(path, format: :hex)` | Streaming MD5 checksum of a file |
@@ -172,6 +204,7 @@ Philiprehberger::Checksum.sha256('hello', format: :base64)
 | `Checksum.files(paths, algo:, format: :hex)` | Hash multiple files, returns `{ path => digest }` |
 | `Checksum.file_multi(path, *algos, format: :hex)` | Multi-algorithm single-pass file checksum |
 | `Checksum.verify?(path, format: :hex, **expected)` | Verify file against expected checksums |
+| `Checksum.verify_string?(string, expected, algo: :sha256, format: :hex)` | Timing-safe verification of a string checksum |
 | `Checksum.directory_checksum(path, algo:, format:)` | Combined checksum of all files in a directory |
 | `Checksum.verify_hmac?(string, expected, key:, algo:)` | Timing-safe HMAC verification |
 
