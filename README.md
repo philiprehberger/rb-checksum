@@ -66,6 +66,18 @@ Philiprehberger::Checksum.compare_files('/path/to/file_a', '/path/to/file_b', al
 # => true or false
 ```
 
+### Compare Strings
+
+Check if two strings have the same checksum:
+
+```ruby
+Philiprehberger::Checksum.compare_strings('hello', 'hello')
+# => true
+
+Philiprehberger::Checksum.compare_strings('hello', 'world', algo: :md5)
+# => false
+```
+
 ### Multi-File Hashing
 
 Hash multiple files in one call:
@@ -206,6 +218,7 @@ Philiprehberger::Checksum.sha256('hello', format: :base64)
 | `Checksum.file_sha512(path, format: :hex)` | Streaming SHA-512 checksum of a file |
 | `Checksum.file_crc32(path, format: :hex)` | Streaming CRC32 checksum of a file |
 | `Checksum.compare_files(path1, path2, algo: :sha256)` | Compare two files by checksum |
+| `Checksum.compare_strings(s1, s2, algo: :sha256)` | Compare two strings by checksum |
 | `Checksum.files(paths, algo:, format: :hex)` | Hash multiple files, returns `{ path => digest }` |
 | `Checksum.file_multi(path, *algos, format: :hex)` | Multi-algorithm single-pass file checksum |
 | `Checksum.verify?(path, format: :hex, **expected)` | Verify file against expected checksums |

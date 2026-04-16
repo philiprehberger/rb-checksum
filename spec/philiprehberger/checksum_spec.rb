@@ -459,6 +459,25 @@ RSpec.describe Philiprehberger::Checksum do
     end
   end
 
+  describe '.compare_strings' do
+    it 'returns true for equal strings' do
+      expect(described_class.compare_strings('hello', 'hello')).to be true
+    end
+
+    it 'returns false for different strings' do
+      expect(described_class.compare_strings('hello', 'world')).to be false
+    end
+
+    it 'works with :md5' do
+      expect(described_class.compare_strings('hello', 'hello', algo: :md5)).to be true
+      expect(described_class.compare_strings('hello', 'world', algo: :md5)).to be false
+    end
+
+    it 'raises Error for unknown algorithm' do
+      expect { described_class.compare_strings('a', 'b', algo: :unknown) }.to raise_error(described_class::Error)
+    end
+  end
+
   describe '.file_sha1' do
     it 'computes SHA-1 for a file' do
       file = Tempfile.new('checksum-test')

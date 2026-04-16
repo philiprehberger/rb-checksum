@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-04-22
+
+### Added
+- `Checksum.compare_strings(s1, s2, algo:)` — compare two strings by checksum (mirror of `compare_files`).
+
 ## [0.7.0] - 2026-04-15
 
 ### Added

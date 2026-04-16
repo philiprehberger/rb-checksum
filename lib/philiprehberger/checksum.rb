@@ -273,6 +273,17 @@ module Philiprehberger
       file_digest(path1, algo: algo) == file_digest(path2, algo: algo)
     end
 
+    # Compare two strings by checksum
+    #
+    # @param s1 [String] the first string
+    # @param s2 [String] the second string
+    # @param algo [Symbol] algorithm to use (:md5, :sha1, :sha256, :sha512, :crc32)
+    # @return [Boolean] true if both strings have the same checksum
+    # @raise [Error] if the algorithm is unknown
+    def self.compare_strings(s1, s2, algo: :sha256)
+      digest(s1, algo: algo) == digest(s2, algo: algo)
+    end
+
     # Hash multiple files, returning a hash of { path => digest }
     #
     # @param paths [Array<String>] file paths to hash
