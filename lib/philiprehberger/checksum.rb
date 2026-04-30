@@ -366,6 +366,34 @@ module Philiprehberger
       end
     end
 
+    # Compute a checksum from any IO-like object using streaming reads
+    #
+    # Reads from `io` in CHUNK_SIZE blocks until EOF. Useful for streaming
+    # sources (sockets, pipes, StringIO) where you do not have a file path.
+    # The IO is not rewound or closed by this method.
+    #
+    # @param io [IO, StringIO] an IO that responds to `eof?` and `read`
+    # @param algo [Symbol] algorithm (:md5, :sha1, :sha256, :sha384, :sha512, :crc32)
+    # @param format [Symbol] output format (:hex or :base64)
+    # @return [String] the checksum
+    # @raise [Error] if the IO is invalid or the algorithm is unknown
+    def self.io_digest(io, algo: :sha256, format: :hex)
+      raise Error, 'io must respond to eof? and read' unless io.respond_to?(:eof?) && io.respond_to?(:read)
+
+      if algo == :crc32
+        value = 0
+        value = Zlib.crc32(io.read(CHUNK_SIZE), value) until io.eof?
+        return format_crc32(value, format: format)
+      end
+
+      klass = ALGORITHMS[algo]
+      raise Error, "unknown algorithm: #{algo}" unless klass
+
+      digest = klass.new
+      digest.update(io.read(CHUNK_SIZE)) until io.eof?
+      format_output(digest, format: format)
+    end
+
     # Compute a combined checksum of all files in a directory.
     #
     # Hashes each file's relative path and content checksum in sorted order,

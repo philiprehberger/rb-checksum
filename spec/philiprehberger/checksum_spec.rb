@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'spec_helper'
+require 'stringio'
 require 'tempfile'
 
 RSpec.describe Philiprehberger::Checksum do
@@ -783,6 +784,60 @@ RSpec.describe Philiprehberger::Checksum do
       expect(result[file.path]).to eq(described_class.crc32('hello'))
     ensure
       file&.unlink
+    end
+  end
+
+  describe '.io_digest' do
+    it 'matches digest for the same content via StringIO' do
+      content = 'streaming content'
+      io = StringIO.new(content)
+      expect(described_class.io_digest(io, algo: :sha256)).to eq(described_class.digest(content, algo: :sha256))
+    end
+
+    it 'supports md5' do
+      expect(described_class.io_digest(StringIO.new('foo'), algo: :md5)).to eq(described_class.md5('foo'))
+    end
+
+    it 'supports sha1' do
+      expect(described_class.io_digest(StringIO.new('foo'), algo: :sha1)).to eq(described_class.sha1('foo'))
+    end
+
+    it 'supports sha384' do
+      expect(described_class.io_digest(StringIO.new('foo'), algo: :sha384)).to eq(described_class.sha384('foo'))
+    end
+
+    it 'supports sha512' do
+      expect(described_class.io_digest(StringIO.new('foo'), algo: :sha512)).to eq(described_class.sha512('foo'))
+    end
+
+    it 'supports crc32' do
+      expect(described_class.io_digest(StringIO.new('foo'), algo: :crc32)).to eq(described_class.crc32('foo'))
+    end
+
+    it 'supports base64 format' do
+      content = 'hello world'
+      expected = described_class.digest(content, algo: :sha256, format: :base64)
+      expect(described_class.io_digest(StringIO.new(content), algo: :sha256, format: :base64)).to eq(expected)
+    end
+
+    it 'handles content larger than CHUNK_SIZE' do
+      content = 'x' * 20_000
+      expected = described_class.digest(content, algo: :sha256)
+      expect(described_class.io_digest(StringIO.new(content), algo: :sha256)).to eq(expected)
+    end
+
+    it 'raises Error for unknown algorithm' do
+      expect { described_class.io_digest(StringIO.new('x'), algo: :unknown) }.to raise_error(described_class::Error)
+    end
+
+    it 'raises Error for non-IO input' do
+      expect { described_class.io_digest('not-an-io', algo: :sha256) }.to raise_error(described_class::Error)
+    end
+
+    it 'consumes the IO position' do
+      io = StringIO.new('hello')
+      described_class.io_digest(io, algo: :sha256)
+      expect(io).to be_eof
     end
   end
 

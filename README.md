@@ -159,6 +159,22 @@ Philiprehberger::Checksum.file_digest("/path/to/file", algo: :crc32)
 
 Both accept `:md5`, `:sha1`, `:sha256`, `:sha384`, `:sha512`, and `:crc32`.
 
+### IO Digests
+
+Stream a digest from any IO-like object — useful when the source isn't a
+file path (sockets, pipes, in-memory buffers).
+
+```ruby
+require 'stringio'
+
+io = StringIO.new('streaming content')
+Philiprehberger::Checksum.io_digest(io, algo: :sha256)
+# => "..."
+
+# Same digest as the string-based API:
+Philiprehberger::Checksum.digest('streaming content', algo: :sha256)
+```
+
 ### Directory Checksum
 
 Compute a combined checksum of all files in a directory:
@@ -217,6 +233,7 @@ Philiprehberger::Checksum.sha256('hello', format: :base64)
 | `Checksum.file_sha256(path, format: :hex)` | Streaming SHA-256 checksum of a file |
 | `Checksum.file_sha512(path, format: :hex)` | Streaming SHA-512 checksum of a file |
 | `Checksum.file_crc32(path, format: :hex)` | Streaming CRC32 checksum of a file |
+| `Checksum.io_digest(io, algo: :sha256, format: :hex)` | Streaming checksum of any IO-like object (e.g. `StringIO`) |
 | `Checksum.compare_files(path1, path2, algo: :sha256)` | Compare two files by checksum |
 | `Checksum.compare_strings(s1, s2, algo: :sha256)` | Compare two strings by checksum |
 | `Checksum.files(paths, algo:, format: :hex)` | Hash multiple files, returns `{ path => digest }` |
