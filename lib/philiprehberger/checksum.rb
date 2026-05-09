@@ -422,6 +422,32 @@ module Philiprehberger
       format_output(combined, format: format)
     end
 
+    # Compute a short, URL-safe content fingerprint for a string
+    #
+    # Hashes the input with the given algorithm and returns the first `length`
+    # characters of the URL-safe base64 (no padding) encoding. Useful for cache
+    # keys, short content-derived IDs, and ETags where a full hex digest is
+    # noisier than necessary.
+    #
+    # The output is deterministic for a given (string, algo, length) triple.
+    # `length` is capped at the natural encoded length of the digest.
+    #
+    # @param string [String] the input string
+    # @param algo [Symbol] algorithm (:md5, :sha1, :sha256, :sha384, :sha512)
+    # @param length [Integer] number of characters to return (must be positive)
+    # @return [String] URL-safe fingerprint of up to `length` characters
+    # @raise [Error] if the algorithm is unknown or length is not a positive Integer
+    def self.fingerprint(string, algo: :sha256, length: 12)
+      raise Error, 'length must be a positive Integer' unless length.is_a?(Integer) && length.positive?
+
+      klass = ALGORITHMS[algo]
+      raise Error, "unknown algorithm: #{algo}" unless klass
+
+      raw = klass.new.update(string).digest
+      encoded = Base64.urlsafe_encode64(raw, padding: false)
+      encoded[0, length]
+    end
+
     # @api private
     def self.digest_string(klass, string, format: :hex)
       digest = klass.new

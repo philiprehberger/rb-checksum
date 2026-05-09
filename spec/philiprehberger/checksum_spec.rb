@@ -1155,4 +1155,62 @@ RSpec.describe Philiprehberger::Checksum do
       end.to raise_error(described_class::Error)
     end
   end
+
+  describe '.fingerprint' do
+    it 'returns a 12-character URL-safe fingerprint by default' do
+      fp = described_class.fingerprint('hello')
+      expect(fp.length).to eq(12)
+      expect(fp).to match(/\A[A-Za-z0-9_-]+\z/)
+    end
+
+    it 'is deterministic for the same input and parameters' do
+      a = described_class.fingerprint('hello world')
+      b = described_class.fingerprint('hello world')
+      expect(a).to eq(b)
+    end
+
+    it 'differs for different inputs' do
+      a = described_class.fingerprint('hello')
+      b = described_class.fingerprint('world')
+      expect(a).not_to eq(b)
+    end
+
+    it 'honors the length parameter' do
+      expect(described_class.fingerprint('hello', length: 4).length).to eq(4)
+      expect(described_class.fingerprint('hello', length: 32).length).to eq(32)
+    end
+
+    it 'caps length at the natural encoded digest length' do
+      huge = described_class.fingerprint('hello', algo: :md5, length: 1000)
+      expect(huge.length).to be <= 24
+    end
+
+    it 'supports each non-CRC algorithm' do
+      %i[md5 sha1 sha256 sha384 sha512].each do |algo|
+        fp = described_class.fingerprint('hello', algo: algo)
+        expect(fp.length).to eq(12)
+      end
+    end
+
+    it 'never contains base64 padding characters' do
+      expect(described_class.fingerprint('a' * 50, length: 32)).not_to include('=')
+    end
+
+    it 'raises for an unknown algorithm' do
+      expect { described_class.fingerprint('hello', algo: :bogus) }
+        .to raise_error(described_class::Error, /unknown algorithm/)
+    end
+
+    it 'raises for a non-positive length' do
+      expect { described_class.fingerprint('hello', length: 0) }
+        .to raise_error(described_class::Error, /length/)
+      expect { described_class.fingerprint('hello', length: -1) }
+        .to raise_error(described_class::Error, /length/)
+    end
+
+    it 'raises for a non-Integer length' do
+      expect { described_class.fingerprint('hello', length: 4.5) }
+        .to raise_error(described_class::Error, /length/)
+    end
+  end
 end

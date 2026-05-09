@@ -204,6 +204,25 @@ Philiprehberger::Checksum.verify?('/path/to/file', sha256: 'expected_hex')
 # => true or false
 ```
 
+### Short Fingerprint
+
+Compute a short, URL-safe fingerprint useful for cache keys, ETags, and
+content-derived short IDs:
+
+```ruby
+Philiprehberger::Checksum.fingerprint('hello')
+# => "LPJNul-wow4m"
+
+Philiprehberger::Checksum.fingerprint('hello', length: 8)
+# => "LPJNul-w"
+
+Philiprehberger::Checksum.fingerprint('hello', algo: :md5, length: 16)
+# => "XUFAKrxLKna5cZ2R"
+```
+
+The output is the first `length` characters of the URL-safe base64 (no
+padding) digest. Deterministic for a given `(string, algo, length)` triple.
+
 ### Base64 Output
 
 All methods support an optional `format` parameter:
@@ -242,6 +261,7 @@ Philiprehberger::Checksum.sha256('hello', format: :base64)
 | `Checksum.verify_string?(string, expected, algo: :sha256, format: :hex)` | Timing-safe verification of a string checksum |
 | `Checksum.directory_checksum(path, algo:, format:)` | Combined checksum of all files in a directory |
 | `Checksum.verify_hmac?(string, expected, key:, algo:)` | Timing-safe HMAC verification |
+| `Checksum.fingerprint(string, algo: :sha256, length: 12)` | Short URL-safe content fingerprint (truncated base64-url, no padding) |
 
 ## Development
 

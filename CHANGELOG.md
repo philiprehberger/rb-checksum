@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-05-09
+
+### Added
+- `Checksum.fingerprint(string, algo: :sha256, length: 12)` — short URL-safe content fingerprint (truncated `base64.urlsafe_encode64` without padding); deterministic for a given `(string, algo, length)` triple. Useful for cache keys, ETags, and content-derived short IDs.
+
 ## [0.9.0] - 2026-04-30
 
 ### Added
